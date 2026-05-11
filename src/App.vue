@@ -1,426 +1,154 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import TheHeader from './components/TheHeader.vue'
+import StatBar   from './components/StatBar.vue'
+import CasesMap  from './components/CasesMap.vue'
+import CasesList from './components/CasesList.vue'
+import NewsFeed  from './components/NewsFeed.vue'
 
-// ── Estado de casos estáticos (public/data/cases.json) ──────────────────────
-const casesData = ref(null)
-const casesError = ref(null)
+const data    = ref(null)
+const error   = ref(null)
+const loading = ref(true)
 
 onMounted(async () => {
   try {
     const res = await fetch('/data/cases.json')
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    casesData.value = await res.json()
-  } catch (err) {
-    casesError.value = err.message
-    console.error('[HantaTracker] cases.json error:', err)
+    data.value = await res.json()
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    loading.value = false
   }
 })
 
-const totalConfirmed = computed(() => casesData.value?.summary?.confirmed ?? '—')
-const totalFatalities = computed(() => casesData.value?.summary?.fatalities ?? '—')
-const activeRegions = computed(() => casesData.value?.summary?.active_regions ?? '—')
-const updatedAt = computed(() => casesData.value?.updated_at ?? null)
-
-// ── Sonda de conexión al backend ─────────────────────────────────────────────
-const probeStatus = ref('idle')
-const probeResponse = ref(null)
-const probeError = ref(null)
-
-async function fetchDashboard() {
-  probeStatus.value = 'loading'
-  probeError.value = null
-  probeResponse.value = null
-
-  try {
-    const res = await fetch('/api/dashboard')
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    probeResponse.value = data
-    console.log('[HantaTracker] /api/dashboard →', data)
-    probeStatus.value = 'ok'
-  } catch (err) {
-    probeError.value = err.message
-    probeStatus.value = 'error'
-    console.error('[HantaTracker] fetch error:', err)
-  }
-}
+const summary  = computed(() => data.value?.summary  ?? {})
+const cases    = computed(() => data.value?.cases    ?? [])
+const newsFeed = computed(() => data.value?.news_feed ?? [])
 </script>
 
 <template>
-  <div class="layout">
-    <header class="header">
-      <div class="header-inner">
-        <div class="header-brand">
-          <span class="header-label">MINSAL · Sección Zoonosis</span>
-          <h1 class="header-title">Monitor Hantavirus</h1>
-        </div>
-        <span class="header-badge">v0.1{{ updatedAt ? ` · ${updatedAt}` : '' }}</span>
-      </div>
-    </header>
+  <div class="app">
+    <TheHeader :updated-at="data?.updated_at" />
 
-    <main class="main">
-      <section class="card probe-card">
-        <h2 class="card-title">Verificación de conexión</h2>
-        <p class="card-desc">
-          Llama al endpoint <code>/api/dashboard</code> y vuelca la respuesta en consola.
-          Abre DevTools → Console para inspeccionar el payload.
-        </p>
+    <div v-if="loading" class="state">Cargando datos…</div>
+    <div v-else-if="error" class="state state--error">
+      No se pudo cargar <code>/data/cases.json</code>: {{ error }}
+    </div>
 
-        <button
-          class="btn"
-          :class="{ 'btn--loading': probeStatus === 'loading' }"
-          :disabled="probeStatus === 'loading'"
-          @click="fetchDashboard"
-        >
-          {{ probeStatus === 'loading' ? 'Consultando…' : 'GET /api/dashboard' }}
-        </button>
-
-        <div v-if="probeStatus === 'ok'" class="result result--ok">
-          <span class="result-label">200 OK</span>
-          <pre class="result-json">{{ JSON.stringify(probeResponse, null, 2) }}</pre>
-        </div>
-
-        <div v-else-if="probeStatus === 'error'" class="result result--error">
-          <span class="result-label">Error</span>
-          <code>{{ probeError }}</code>
-        </div>
-      </section>
-
-      <section class="card" :class="{ 'placeholder-card': !casesData }">
-        <h2 class="card-title">Resumen epidemiológico</h2>
-
-        <div v-if="casesError" class="cases-error">
-          No se pudo cargar cases.json: {{ casesError }}
-        </div>
-
-        <div v-else class="stat-grid">
-          <div class="stat">
-            <span class="stat-value">{{ totalConfirmed }}</span>
-            <span class="stat-label">Casos confirmados</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">{{ totalFatalities }}</span>
-            <span class="stat-label">Fallecidos</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">{{ activeRegions }}</span>
-            <span class="stat-label">Regiones con casos activos</span>
-          </div>
-        </div>
-
-        <table v-if="casesData?.cases?.length" class="cases-table">
-          <thead>
-            <tr>
-              <th>Región</th>
-              <th>Confirmación</th>
-              <th>Exposición</th>
-              <th>Desenlace</th>
-              <th>Fuente</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="c in casesData.cases" :key="c.id">
-              <td>{{ c.region }}</td>
-              <td class="mono">{{ c.fecha_confirmacion }}</td>
-              <td>{{ c.exposicion }}</td>
-              <td>
-                <span class="badge" :class="`badge--${c.desenlace}`">
-                  {{ c.desenlace }}
-                </span>
-              </td>
-              <td class="muted">{{ c.fuente }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section class="card placeholder-card">
-        <h2 class="card-title">Distribución geográfica</h2>
-        <p class="card-desc card-desc--placeholder">
-          Mapa de calor por región — datos ISP / SEREMI
-        </p>
-      </section>
-
-      <section class="card placeholder-card">
-        <h2 class="card-title">Boletín de novedades</h2>
-        <p class="card-desc card-desc--placeholder">
-          Alertas epidemiológicas y circulares MINSAL
-        </p>
-      </section>
+    <main v-else class="layout">
+      <!--
+        Mobile:  stats → map → list → feed  (columna única, scroll normal)
+        Desktop: [stats / list] | [map] | [feed]  (3 cols, cada col scrollable)
+      -->
+      <StatBar   class="area-stats" :summary="summary" />
+      <CasesMap  class="area-map"   :cases="cases" />
+      <CasesList class="area-list"  :cases="cases" />
+      <NewsFeed  class="area-feed"  :news-feed="newsFeed" :cases="cases" />
     </main>
 
-    <footer class="footer">
-      Fuente: Protocolo oficial Hantavirus Chile · MINSAL · ISP
+    <footer v-if="!loading && !error" class="footer">
+      {{ data?.source }}
     </footer>
   </div>
 </template>
 
 <style scoped>
-.layout {
+/* ────────────────────────────────────────────────
+   App shell
+──────────────────────────────────────────────── */
+.app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* ── Header ── */
-.header {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  padding: 0 24px;
-}
-
-.header-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 16px 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-
-.header-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin-bottom: 2px;
-}
-
-.header-title {
-  font-size: 20px;
-  color: var(--color-accent);
-}
-
-.header-badge {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--color-text-muted);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  padding: 2px 8px;
-  border-radius: 3px;
-}
-
-/* ── Main grid ── */
-.main {
+/* ── Estados de carga / error ── */
+.state {
   flex: 1;
-  max-width: 1100px;
-  width: 100%;
-  margin: 32px auto;
-  padding: 0 24px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
-  gap: 20px;
-  align-items: start;
-}
-
-/* ── Cards ── */
-.card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 24px;
-}
-
-.card-title {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin-bottom: 8px;
-}
-
-.card-desc {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  margin-bottom: 20px;
-}
-
-.card-desc--placeholder {
-  margin-bottom: 0;
-  font-style: italic;
-}
-
-.placeholder-card {
-  opacity: 0.55;
-}
-
-/* ── Button ── */
-.btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  font-size: 13px;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  color: var(--color-surface);
-  background: var(--color-accent);
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: opacity 0.15s;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--c-muted);
+  font-size: 14px;
 }
 
-.btn:hover:not(:disabled) {
-  opacity: 0.88;
+.state--error { color: var(--c-fallecido); }
+
+/* ────────────────────────────────────────────────
+   MOBILE — columna única, scroll de página normal
+──────────────────────────────────────────────── */
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "stats"
+    "map"
+    "list"
+    "feed";
 }
 
-.btn:disabled,
-.btn--loading {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+.area-stats { grid-area: stats; }
+.area-map   { grid-area: map;   }
+.area-list  { grid-area: list;  }
+.area-feed  { grid-area: feed;  }
 
-/* ── Result block ── */
-.result {
-  margin-top: 16px;
-  border-radius: 3px;
-  padding: 14px 16px;
-  font-size: 13px;
-}
+/* ────────────────────────────────────────────────
+   DESKTOP ≥1024px — 3 columnas, viewport fijo
+   Izquierda: stats (fijo) + list (scroll)
+   Centro:    mapa (ocupa ambas filas)
+   Derecha:   feed (scroll)
+──────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .app {
+    height: 100vh;
+    overflow: hidden;
+  }
 
-.result--ok {
-  background: var(--color-accent-light);
-  border: 1px solid #b8d0e8;
-}
+  .layout {
+    /* dos filas: stats (auto) + list (1fr) */
+    grid-template-columns: 300px 1fr 280px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "stats map feed"
+      "list  map feed";
+    height: 100%;          /* fill flex parent */
+    min-height: 0;
+    overflow: hidden;
+  }
 
-.result--error {
-  background: #fdf0f0;
-  border: 1px solid #e8b8b8;
-  color: #7a2020;
-}
+  /* Bordes de separación de columnas */
+  .area-stats {
+    border-right: 1px solid var(--c-border);
+    border-bottom: 1px solid var(--c-border);
+  }
 
-.result-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-  opacity: 0.7;
-}
+  .area-list {
+    border-right: 1px solid var(--c-border);
+    overflow-y: auto;
+    min-height: 0;        /* clave para que el grid item pueda shrink */
+  }
 
-.result-json {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-all;
+  .area-map {
+    overflow: hidden;
+  }
+
+  .area-feed {
+    border-left: 1px solid var(--c-border);
+    overflow-y: auto;
+    min-height: 0;
+  }
 }
 
 /* ── Footer ── */
 .footer {
-  border-top: 1px solid var(--color-border);
-  padding: 14px 24px;
+  border-top: 1px solid var(--c-border);
+  padding: 8px 20px;
   font-size: 11px;
-  color: var(--color-text-muted);
-  text-align: center;
+  color: var(--c-muted);
   letter-spacing: 0.02em;
-}
-
-/* ── Stat grid ── */
-.stat-grid {
-  display: flex;
-  gap: 32px;
-  margin-bottom: 24px;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--color-accent);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
-}
-
-/* ── Cases table ── */
-.cases-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12.5px;
-}
-
-.cases-table th {
-  text-align: left;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  border-bottom: 1px solid var(--color-border);
-  padding: 6px 10px 6px 0;
-}
-
-.cases-table td {
-  padding: 8px 10px 8px 0;
-  border-bottom: 1px solid var(--color-bg);
-  vertical-align: top;
-}
-
-.cases-table tr:last-child td {
-  border-bottom: none;
-}
-
-.mono {
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
-.muted {
-  color: var(--color-text-muted);
-}
-
-/* ── Desenlace badges ── */
-.badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  padding: 2px 7px;
-  border-radius: 2px;
-}
-
-.badge--recuperado {
-  background: #eaf3ea;
-  color: #2a5a2a;
-  border: 1px solid #b8d8b8;
-}
-
-.badge--hospitalizado {
-  background: var(--color-accent-light);
-  color: var(--color-accent);
-  border: 1px solid #b8d0e8;
-}
-
-.badge--fallecido {
-  background: #f0eded;
-  color: #5a2a2a;
-  border: 1px solid #d8b8b8;
-}
-
-/* ── Error inline ── */
-.cases-error {
-  font-size: 12px;
-  color: #7a2020;
-  background: #fdf0f0;
-  border: 1px solid #e8b8b8;
-  padding: 10px 14px;
-  border-radius: 3px;
+  flex-shrink: 0;
 }
 </style>
