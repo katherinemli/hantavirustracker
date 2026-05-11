@@ -1,48 +1,213 @@
 {
   "updated_at": "2026-05-11",
-  "source": "MINSAL / ISP Chile — datos investigados manualmente",
+  "outbreak": "MV Hondius — Hantavirus Andes (ANDV)",
+  "source": "WHO / CDC / ECDC / ProMED-mail",
   "summary": {
     "confirmed": 3,
-    "fatalities": 0,
-    "fatality_rate": 0.0,
-    "active_regions": 1
+    "monitoring": 5,
+    "countries_alert": 8
   },
+  "ship_route": [
+    [
+      -54.8,
+      -68.3
+    ],
+    [
+      -57.0,
+      -60.0
+    ],
+    [
+      -54.25,
+      -36.5
+    ],
+    [
+      -51.7,
+      -59.52
+    ],
+    [
+      -34.9,
+      -56.2
+    ],
+    [
+      -22.9,
+      -43.17
+    ],
+    [
+      14.93,
+      -23.51
+    ],
+    [
+      38.72,
+      -9.14
+    ],
+    [
+      51.9,
+      4.48
+    ]
+  ],
   "cases": [
     {
-      "id": 2,
-      "region": "Aysén",
-      "comuna": "Coyhaique",
-      "fecha_inicio_sintomas": "2025-12-14",
-      "fecha_confirmacion": "2025-12-18",
-      "sexo": "F",
-      "edad": 28,
-      "exposicion": "Limpieza de bodega con presencia de roedores",
-      "desenlace": "recuperado",
-      "fuente": "Boletín ISP N°51 2025"
+      "id": 1,
+      "country": "Argentina",
+      "region": "Tierra del Fuego",
+      "lat": -54.8,
+      "lng": -68.3,
+      "status": "Confirmed",
+      "pathogen": "Hantavirus Andes (ANDV)",
+      "date": "2026-04-15",
+      "source_url": "https://www.who.int/emergencies/disease-outbreak-news",
+      "source_agency": "WHO",
+      "notes": "Tripulante del MV Hondius. Exposición confirmada en zona endémica."
     },
     {
-      "id": 1,
-      "region": "Los Lagos",
-      "comuna": "Puerto Montt",
-      "fecha_inicio_sintomas": "2025-11-03",
-      "fecha_confirmacion": "2025-11-07",
-      "sexo": "M",
-      "edad": 34,
-      "exposicion": "Trabajo agrícola en zona boscosa",
-      "desenlace": "recuperado",
-      "fuente": "Boletín ISP N°47 2025"
+      "id": 2,
+      "country": "Chile",
+      "region": "Magallanes",
+      "lat": -53.16,
+      "lng": -70.91,
+      "status": "Confirmed",
+      "pathogen": "Hantavirus Andes (ANDV)",
+      "date": "2026-04-18",
+      "source_url": "https://www.who.int/emergencies/disease-outbreak-news",
+      "source_agency": "WHO",
+      "notes": "Pasajero con historial de contacto en área subantártica."
     },
     {
       "id": 3,
-      "region": "La Araucanía",
-      "comuna": "Temuco",
-      "fecha_inicio_sintomas": "2026-01-22",
-      "fecha_confirmacion": "2026-01-26",
-      "sexo": "M",
-      "edad": 51,
-      "exposicion": "Actividad forestal",
-      "desenlace": "hospitalizado",
-      "fuente": "Boletín ISP N°04 2026"
+      "country": "Netherlands",
+      "region": "Rotterdam",
+      "lat": 51.9,
+      "lng": 4.48,
+      "status": "Confirmed",
+      "pathogen": "Hantavirus Andes (ANDV)",
+      "date": "2026-04-28",
+      "source_url": "https://www.ecdc.europa.eu/en/publications-data/rapid-risk-assessments",
+      "source_agency": "ECDC",
+      "notes": "Pasajero repatriado. Primer caso confirmado en Europa."
+    },
+    {
+      "id": 4,
+      "country": "Germany",
+      "region": "Hamburg",
+      "lat": 53.55,
+      "lng": 10.0,
+      "status": "Monitoring",
+      "pathogen": "Hantavirus Andes (ANDV)",
+      "date": "2026-04-30",
+      "source_url": "https://www.ecdc.europa.eu/en/news-events",
+      "source_agency": "ECDC",
+      "notes": "Contactos cercanos bajo vigilancia activa. Sin síntomas al momento."
+    },
+    {
+      "id": 5,
+      "country": "United Kingdom",
+      "region": "London",
+      "lat": 51.51,
+      "lng": -0.13,
+      "status": "Monitoring",
+      "pathogen": "Hantavirus Andes (ANDV)",
+      "date": "2026-04-30",
+      "source_url": "https://www.gov.uk/government/organisations/uk-health-security-agency",
+      "source_agency": "UKHSA",
+      "notes": "Tres pasajeros bajo monitoreo. UKHSA coordina con ECDC."
+    },
+    {
+      "id": 6,
+      "country": "France",
+      "region": "Île-de-France",
+      "lat": 48.85,
+      "lng": 2.35,
+      "status": "Monitoring",
+      "pathogen": "Hantavirus Andes (ANDV)",
+      "date": "2026-05-01",
+      "source_url": "https://www.ecdc.europa.eu/en/news-events",
+      "source_agency": "ECDC",
+      "notes": "Pasajeros identificados. Autoridades sanitarias en coordinación con ECDC."
+    },
+    {
+      "id": 7,
+      "country": "United States",
+      "region": "New York",
+      "lat": 40.71,
+      "lng": -74.01,
+      "status": "Monitoring",
+      "pathogen": "Hantavirus Andes (ANDV)",
+      "date": "2026-05-02",
+      "source_url": "https://www.cdc.gov/hantavirus",
+      "source_agency": "CDC",
+      "notes": "Pasajero estadounidense identificado. CDC emite guía de seguimiento."
+    },
+    {
+      "id": 8,
+      "country": "Belgium",
+      "region": "Brussels",
+      "lat": 50.85,
+      "lng": 4.35,
+      "status": "Monitoring",
+      "pathogen": "Hantavirus Andes (ANDV)",
+      "date": "2026-05-03",
+      "source_url": "https://www.ecdc.europa.eu/en/news-events",
+      "source_agency": "ECDC",
+      "notes": "Caso bajo evaluación epidemiológica por Sciensano."
+    }
+  ],
+  "news_feed": [
+    {
+      "date": "2026-05-10",
+      "title": "WHO: Multi-country alert — ANDV cases linked to MV Hondius expedition cruise",
+      "agency": "WHO",
+      "url": "https://www.who.int/emergencies/disease-outbreak-news",
+      "langs": [
+        "en",
+        "fr",
+        "es"
+      ]
+    },
+    {
+      "date": "2026-05-08",
+      "title": "ECDC Rapid Risk Assessment: Hantavirus Andes in returning travellers from South America",
+      "agency": "ECDC",
+      "url": "https://www.ecdc.europa.eu/en/publications-data/rapid-risk-assessments",
+      "langs": [
+        "en"
+      ]
+    },
+    {
+      "date": "2026-05-07",
+      "title": "OPS/PAHO: Alerta epidemiológica — Hantavirus Andes (ANDV) en viajeros internacionales",
+      "agency": "PAHO",
+      "url": "https://www.paho.org/es/alertas-y-respuestas-por-paises",
+      "langs": [
+        "es"
+      ]
+    },
+    {
+      "date": "2026-05-05",
+      "title": "CDC Travel Health Notice: Hantavirus (ANDV) Risk — Patagonia and Sub-Antarctic",
+      "agency": "CDC",
+      "url": "https://www.cdc.gov/hantavirus",
+      "langs": [
+        "en"
+      ]
+    },
+    {
+      "date": "2026-05-03",
+      "title": "ProMED-mail: HANTAVIRUS PULMONARY SYNDROME — MULTI-COUNTRY (04): MV Hondius link",
+      "agency": "ProMED",
+      "url": "https://promedmail.org",
+      "langs": [
+        "en"
+      ]
+    },
+    {
+      "date": "2026-04-28",
+      "title": "ECDC: First ANDV case confirmed in Europe — Netherlands reports repatriated cruise passenger",
+      "agency": "ECDC",
+      "url": "https://www.ecdc.europa.eu/en/news-events",
+      "langs": [
+        "en",
+        "fr"
+      ]
     }
   ]
 }

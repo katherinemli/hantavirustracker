@@ -106,6 +106,7 @@ watch(() => props.cases, renderMarkers, { deep: true })
   <div class="map-wrap">
     <div ref="mapEl" class="map-el" />
     <div class="map-legend">
+      <p class="legend-header">Casos ANDV</p>
       <div class="legend-row">
         <span class="legend-dot" style="background:#276749" />
         <span>recuperado</span>
@@ -183,6 +184,17 @@ watch(() => props.cases, renderMarkers, { deep: true })
   gap: 5px;
   pointer-events: none;
   backdrop-filter: blur(4px);
+}
+
+.legend-header {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-accent);
+  margin-bottom: 2px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--c-border);
 }
 
 .legend-row {

@@ -1,11 +1,15 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import TheHeader from './components/TheHeader.vue'
-import StatBar   from './components/StatBar.vue'
-import CasesMap  from './components/CasesMap.vue'
-import CasesList from './components/CasesList.vue'
-import NewsFeed  from './components/NewsFeed.vue'
+import TheHeader    from './components/TheHeader.vue'
+import StatBar      from './components/StatBar.vue'
+import MapContainer from './components/MapContainer.vue'
+import LeftSidebar  from './components/LeftSidebar.vue'
+import RightSidebar from './components/RightSidebar.vue'
+import { useI18n }  from './composables/useI18n.js'
 
+const { t } = useI18n()
+
+/* ── Fetch ── */
 const data    = ref(null)
 const error   = ref(null)
 const loading = ref(true)
@@ -22,63 +26,105 @@ onMounted(async () => {
   }
 })
 
-const summary  = computed(() => data.value?.summary  ?? {})
-const cases    = computed(() => data.value?.cases    ?? [])
-const newsFeed = computed(() => data.value?.news_feed ?? [])
+/* ── Datos derivados ── */
+const cases     = computed(() => data.value?.cases     ?? [])
+const shipRoute = computed(() => data.value?.ship_route ?? [])
+const newsFeed  = computed(() => data.value?.news_feed  ?? [])
+
+const summary = computed(() => ({
+  confirmed:       cases.value.filter(c => c.status === 'Confirmed').length,
+  monitoring:      cases.value.filter(c => c.status === 'Monitoring').length,
+  countries_alert: new Set(cases.value.map(c => c.country)).size,
+}))
+
+/* ── Estado de filtros (gestionado aquí para que el mapa y la lista compartan estado) ── */
+const statusFilter = ref('all')
+const searchQuery  = ref('')
+
+const filteredCases = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return cases.value
+    .filter(c => statusFilter.value === 'all' || c.status === statusFilter.value)
+    .filter(c => !q || c.country.toLowerCase().includes(q) || (c.region ?? '').toLowerCase().includes(q))
+})
 </script>
 
 <template>
   <div class="app">
     <TheHeader :updated-at="data?.updated_at" />
 
-    <div v-if="loading" class="state">Cargando datos…</div>
+    <div v-if="loading" class="state">{{ t('loading') }}</div>
+
     <div v-else-if="error" class="state state--error">
-      No se pudo cargar <code>/data/cases.json</code>: {{ error }}
+      {{ t('error_prefix') }} {{ error }}
     </div>
 
-    <main v-else class="layout">
+    <template v-else>
       <!--
-        Mobile:  stats → map → list → feed  (columna única, scroll normal)
-        Desktop: [stats / list] | [map] | [feed]  (3 cols, cada col scrollable)
+        MOBILE:  stats → map → left (filtros+lista) → right (feed)
+        DESKTOP: [stats full-width] / [left | map | right]
       -->
-      <StatBar   class="area-stats" :summary="summary" />
-      <CasesMap  class="area-map"   :cases="cases" />
-      <CasesList class="area-list"  :cases="cases" />
-      <NewsFeed  class="area-feed"  :news-feed="newsFeed" :cases="cases" />
-    </main>
+      <main class="layout">
+        <StatBar
+          class="area-stats"
+          :summary="summary"
+        />
 
-    <footer v-if="!loading && !error" class="footer">
-      {{ data?.source }}
-    </footer>
+        <MapContainer
+          class="area-map"
+          :cases="filteredCases"
+          :ship-route="shipRoute"
+        />
+
+        <LeftSidebar
+          class="area-left"
+          :cases="cases"
+          :filtered="filteredCases"
+          :status-filter="statusFilter"
+          :search-query="searchQuery"
+          @update:status-filter="statusFilter = $event"
+          @update:search-query="searchQuery = $event"
+        />
+
+        <RightSidebar
+          class="area-right"
+          :news-feed="newsFeed"
+        />
+      </main>
+
+      <footer class="footer">
+        <span>{{ data?.source }}</span>
+        <span class="footer-sep">·</span>
+        <span class="footer-disclaimer">{{ t('disclaimer') }}</span>
+      </footer>
+    </template>
   </div>
 </template>
 
 <style scoped>
-/* ────────────────────────────────────────────────
-   App shell
-──────────────────────────────────────────────── */
+/* ── Shell ── */
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* ── Estados de carga / error ── */
+/* ── Estados ── */
 .state {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 48px 20px;
   color: var(--c-muted);
   font-size: 14px;
 }
 
-.state--error { color: var(--c-fallecido); }
+.state--error { color: var(--c-confirmed); }
 
-/* ────────────────────────────────────────────────
-   MOBILE — columna única, scroll de página normal
-──────────────────────────────────────────────── */
+/* ────────────────────────────────────
+   MOBILE — columna única, scroll libre
+──────────────────────────────────── */
 .layout {
   flex: 1;
   display: grid;
@@ -86,21 +132,20 @@ const newsFeed = computed(() => data.value?.news_feed ?? [])
   grid-template-areas:
     "stats"
     "map"
-    "list"
-    "feed";
+    "left"
+    "right";
 }
 
 .area-stats { grid-area: stats; }
 .area-map   { grid-area: map;   }
-.area-list  { grid-area: list;  }
-.area-feed  { grid-area: feed;  }
+.area-left  { grid-area: left;  }
+.area-right { grid-area: right; }
 
-/* ────────────────────────────────────────────────
-   DESKTOP ≥1024px — 3 columnas, viewport fijo
-   Izquierda: stats (fijo) + list (scroll)
-   Centro:    mapa (ocupa ambas filas)
-   Derecha:   feed (scroll)
-──────────────────────────────────────────────── */
+/* ────────────────────────────────────
+   DESKTOP ≥1024px — viewport fijo
+   Stats: banner full-width
+   Fila 2: [left | map | right]
+──────────────────────────────────── */
 @media (min-width: 1024px) {
   .app {
     height: 100vh;
@@ -108,34 +153,30 @@ const newsFeed = computed(() => data.value?.news_feed ?? [])
   }
 
   .layout {
-    /* dos filas: stats (auto) + list (1fr) */
-    grid-template-columns: 300px 1fr 280px;
+    grid-template-columns: 280px 1fr 280px;
     grid-template-rows: auto 1fr;
     grid-template-areas:
-      "stats map feed"
-      "list  map feed";
-    height: 100%;          /* fill flex parent */
+      "stats stats stats"
+      "left  map   right";
+    height: 100%;
     min-height: 0;
     overflow: hidden;
   }
 
-  /* Bordes de separación de columnas */
   .area-stats {
-    border-right: 1px solid var(--c-border);
+    grid-column: 1 / -1;           /* banner full-width */
     border-bottom: 1px solid var(--c-border);
   }
 
-  .area-list {
+  .area-left {
     border-right: 1px solid var(--c-border);
     overflow-y: auto;
-    min-height: 0;        /* clave para que el grid item pueda shrink */
+    min-height: 0;
   }
 
-  .area-map {
-    overflow: hidden;
-  }
+  .area-map  { overflow: hidden; }
 
-  .area-feed {
+  .area-right {
     border-left: 1px solid var(--c-border);
     overflow-y: auto;
     min-height: 0;
@@ -148,7 +189,19 @@ const newsFeed = computed(() => data.value?.news_feed ?? [])
   padding: 8px 20px;
   font-size: 11px;
   color: var(--c-muted);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.footer-sep { opacity: 0.4; }
+
+.footer-disclaimer {
+  font-style: italic;
+  color: var(--c-accent);
+  opacity: 0.7;
 }
 </style>

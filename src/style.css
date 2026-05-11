@@ -12,6 +12,14 @@
   --c-muted:            #718096;
   --c-accent:           #1F4B8E;
   --c-accent-dim:       #EBF2FF;
+  /* Status: brote MV Hondius */
+  --c-confirmed:        #C05621;
+  --c-confirmed-bg:     #FFFAF0;
+  --c-confirmed-bd:     #FBD38D;
+  --c-monitoring:       #2B6CB0;
+  --c-monitoring-bg:    #EBF8FF;
+  --c-monitoring-bd:    #90CDF4;
+  /* Legacy Chile — mantenidos para CasesList/NewsFeed */
   --c-recuperado:       #276749;
   --c-recuperado-bg:    #F0FFF4;
   --c-recuperado-bd:    #9AE6B4;

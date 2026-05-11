@@ -1,27 +1,35 @@
 <script setup>
+import { useI18n } from '../composables/useI18n.js'
+
 defineProps({
   summary: {
     type: Object,
-    default: () => ({ confirmed: '—', fatalities: '—', active_regions: '—', fatality_rate: null }),
+    default: () => ({ confirmed: '—', monitoring: '—', countries_alert: '—' }),
   },
 })
+
+const { t } = useI18n()
 </script>
 
 <template>
   <section class="statbar">
     <div class="stat">
-      <span class="stat-value">{{ summary.confirmed }}</span>
-      <span class="stat-label">Casos confirmados</span>
+      <span class="stat-value stat-value--confirmed">{{ summary.confirmed }}</span>
+      <span class="stat-label">{{ t('confirmed') }}</span>
     </div>
+
     <div class="stat-divider" />
+
     <div class="stat">
-      <span class="stat-value">{{ summary.fatalities }}</span>
-      <span class="stat-label">Fallecidos</span>
+      <span class="stat-value stat-value--monitoring">{{ summary.monitoring }}</span>
+      <span class="stat-label">{{ t('monitoring') }}</span>
     </div>
+
     <div class="stat-divider" />
+
     <div class="stat">
-      <span class="stat-value">{{ summary.active_regions }}</span>
-      <span class="stat-label">Regiones activas</span>
+      <span class="stat-value">{{ summary.countries_alert }}</span>
+      <span class="stat-label">{{ t('countries') }}</span>
     </div>
   </section>
 </template>
@@ -32,7 +40,6 @@ defineProps({
   grid-template-columns: 1fr auto 1fr auto 1fr;
   align-items: center;
   background: var(--c-surface);
-  border-bottom: 1px solid var(--c-border);
   padding: 20px 8px;
 }
 
@@ -44,7 +51,7 @@ defineProps({
   padding: 10px 4px;
 }
 
-/* Mobile: números gigantes (requisito crítico) */
+/* Mobile: números gigantes */
 .stat-value {
   font-size: 42px;
   font-weight: 700;
@@ -53,6 +60,9 @@ defineProps({
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
+
+.stat-value--confirmed  { color: var(--c-confirmed); }
+.stat-value--monitoring { color: var(--c-monitoring); }
 
 .stat-label {
   font-size: 10px;
@@ -71,18 +81,9 @@ defineProps({
   flex-shrink: 0;
 }
 
-/* Desktop: columna izquierda de 300px — reducimos la fuente */
 @media (min-width: 1024px) {
-  .statbar {
-    padding: 14px 8px;
-  }
-
-  .stat-value {
-    font-size: 30px;
-  }
-
-  .stat-divider {
-    height: 32px;
-  }
+  .statbar { padding: 12px 8px; }
+  .stat-value { font-size: 28px; }
+  .stat-divider { height: 30px; }
 }
 </style>
