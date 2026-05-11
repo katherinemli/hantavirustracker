@@ -81,10 +81,14 @@ function renderRoute() {
 onMounted(async () => {
   await nextTick()
   map = L.map(mapEl.value, {
-    center:           [15, -30],   /* Vista mundial centrada en el Atlántico */
-    zoom:             3,
-    zoomControl:      true,
-    attributionControl: true,
+    center:              [15, -30],
+    zoom:                3,
+    minZoom:             2,          /* impide zoom-out que causa el tile-wrap */
+    worldCopyJump:       false,
+    maxBounds:           [[-90, -210], [90, 210]],
+    maxBoundsViscosity:  1.0,        /* pared dura: no se puede arrastrar fuera */
+    zoomControl:         true,
+    attributionControl:  true,
   })
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -92,6 +96,7 @@ onMounted(async () => {
       '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ' +
       '© <a href="https://carto.com/attributions">CARTO</a>',
     subdomains: 'abcd',
+    noWrap:     true,               /* los tiles no se repiten horizontalmente */
     maxZoom:    18,
   }).addTo(map)
 
