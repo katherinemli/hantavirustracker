@@ -1,0 +1,48 @@
+{
+  "updated_at": "2026-05-11",
+  "source": "MINSAL / ISP Chile — datos investigados manualmente",
+  "summary": {
+    "confirmed": 3,
+    "fatalities": 0,
+    "fatality_rate": 0.0,
+    "active_regions": 1
+  },
+  "cases": [
+    {
+      "id": 2,
+      "region": "Aysén",
+      "comuna": "Coyhaique",
+      "fecha_inicio_sintomas": "2025-12-14",
+      "fecha_confirmacion": "2025-12-18",
+      "sexo": "F",
+      "edad": 28,
+      "exposicion": "Limpieza de bodega con presencia de roedores",
+      "desenlace": "recuperado",
+      "fuente": "Boletín ISP N°51 2025"
+    },
+    {
+      "id": 1,
+      "region": "Los Lagos",
+      "comuna": "Puerto Montt",
+      "fecha_inicio_sintomas": "2025-11-03",
+      "fecha_confirmacion": "2025-11-07",
+      "sexo": "M",
+      "edad": 34,
+      "exposicion": "Trabajo agrícola en zona boscosa",
+      "desenlace": "recuperado",
+      "fuente": "Boletín ISP N°47 2025"
+    },
+    {
+      "id": 3,
+      "region": "La Araucanía",
+      "comuna": "Temuco",
+      "fecha_inicio_sintomas": "2026-01-22",
+      "fecha_confirmacion": "2026-01-26",
+      "sexo": "M",
+      "edad": 51,
+      "exposicion": "Actividad forestal",
+      "desenlace": "hospitalizado",
+      "fuente": "Boletín ISP N°04 2026"
+    }
+  ]
+}

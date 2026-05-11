@@ -1,0 +1,39 @@
+name: Actualizar datos de casos
+
+on:
+  schedule:
+    # Cada 2 días a las 07:00 UTC (04:00 Chile continental)
+    - cron: "0 7 */2 * *"
+  workflow_dispatch: # permite disparo manual desde la UI de GitHub
+
+jobs:
+  fetch-and-commit:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r scripts/requirements.txt
+
+      - name: Ejecutar script de datos
+        run: python scripts/fetch_cases.py
+
+      - name: Commit si hubo cambios
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/cases.json
+          git diff --cached --quiet || git commit -m "data: actualizar casos $(date -u '+%Y-%m-%d')"
+          git push

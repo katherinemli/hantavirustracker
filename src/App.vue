@@ -1,25 +1,46 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
-const status = ref('idle')
-const response = ref(null)
-const error = ref(null)
+// ── Estado de casos estáticos (public/data/cases.json) ──────────────────────
+const casesData = ref(null)
+const casesError = ref(null)
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/data/cases.json')
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    casesData.value = await res.json()
+  } catch (err) {
+    casesError.value = err.message
+    console.error('[HantaTracker] cases.json error:', err)
+  }
+})
+
+const totalConfirmed = computed(() => casesData.value?.summary?.confirmed ?? '—')
+const totalFatalities = computed(() => casesData.value?.summary?.fatalities ?? '—')
+const activeRegions = computed(() => casesData.value?.summary?.active_regions ?? '—')
+const updatedAt = computed(() => casesData.value?.updated_at ?? null)
+
+// ── Sonda de conexión al backend ─────────────────────────────────────────────
+const probeStatus = ref('idle')
+const probeResponse = ref(null)
+const probeError = ref(null)
 
 async function fetchDashboard() {
-  status.value = 'loading'
-  error.value = null
-  response.value = null
+  probeStatus.value = 'loading'
+  probeError.value = null
+  probeResponse.value = null
 
   try {
     const res = await fetch('/api/dashboard')
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
-    response.value = data
+    probeResponse.value = data
     console.log('[HantaTracker] /api/dashboard →', data)
-    status.value = 'ok'
+    probeStatus.value = 'ok'
   } catch (err) {
-    error.value = err.message
-    status.value = 'error'
+    probeError.value = err.message
+    probeStatus.value = 'error'
     console.error('[HantaTracker] fetch error:', err)
   }
 }
@@ -33,7 +54,7 @@ async function fetchDashboard() {
           <span class="header-label">MINSAL · Sección Zoonosis</span>
           <h1 class="header-title">Monitor Hantavirus</h1>
         </div>
-        <span class="header-badge">v0.1 · dev</span>
+        <span class="header-badge">v0.1{{ updatedAt ? ` · ${updatedAt}` : '' }}</span>
       </div>
     </header>
 
@@ -47,29 +68,70 @@ async function fetchDashboard() {
 
         <button
           class="btn"
-          :class="{ 'btn--loading': status === 'loading' }"
-          :disabled="status === 'loading'"
+          :class="{ 'btn--loading': probeStatus === 'loading' }"
+          :disabled="probeStatus === 'loading'"
           @click="fetchDashboard"
         >
-          {{ status === 'loading' ? 'Consultando…' : 'GET /api/dashboard' }}
+          {{ probeStatus === 'loading' ? 'Consultando…' : 'GET /api/dashboard' }}
         </button>
 
-        <div v-if="status === 'ok'" class="result result--ok">
+        <div v-if="probeStatus === 'ok'" class="result result--ok">
           <span class="result-label">200 OK</span>
-          <pre class="result-json">{{ JSON.stringify(response, null, 2) }}</pre>
+          <pre class="result-json">{{ JSON.stringify(probeResponse, null, 2) }}</pre>
         </div>
 
-        <div v-else-if="status === 'error'" class="result result--error">
+        <div v-else-if="probeStatus === 'error'" class="result result--error">
           <span class="result-label">Error</span>
-          <code>{{ error }}</code>
+          <code>{{ probeError }}</code>
         </div>
       </section>
 
-      <section class="card placeholder-card">
+      <section class="card" :class="{ 'placeholder-card': !casesData }">
         <h2 class="card-title">Resumen epidemiológico</h2>
-        <p class="card-desc card-desc--placeholder">
-          Casos confirmados · Tasa de letalidad · Regiones activas
-        </p>
+
+        <div v-if="casesError" class="cases-error">
+          No se pudo cargar cases.json: {{ casesError }}
+        </div>
+
+        <div v-else class="stat-grid">
+          <div class="stat">
+            <span class="stat-value">{{ totalConfirmed }}</span>
+            <span class="stat-label">Casos confirmados</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ totalFatalities }}</span>
+            <span class="stat-label">Fallecidos</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ activeRegions }}</span>
+            <span class="stat-label">Regiones con casos activos</span>
+          </div>
+        </div>
+
+        <table v-if="casesData?.cases?.length" class="cases-table">
+          <thead>
+            <tr>
+              <th>Región</th>
+              <th>Confirmación</th>
+              <th>Exposición</th>
+              <th>Desenlace</th>
+              <th>Fuente</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="c in casesData.cases" :key="c.id">
+              <td>{{ c.region }}</td>
+              <td class="mono">{{ c.fecha_confirmacion }}</td>
+              <td>{{ c.exposicion }}</td>
+              <td>
+                <span class="badge" :class="`badge--${c.desenlace}`">
+                  {{ c.desenlace }}
+                </span>
+              </td>
+              <td class="muted">{{ c.fuente }}</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       <section class="card placeholder-card">
@@ -257,5 +319,108 @@ async function fetchDashboard() {
   color: var(--color-text-muted);
   text-align: center;
   letter-spacing: 0.02em;
+}
+
+/* ── Stat grid ── */
+.stat-grid {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-accent);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+/* ── Cases table ── */
+.cases-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.cases-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  padding: 6px 10px 6px 0;
+}
+
+.cases-table td {
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--color-bg);
+  vertical-align: top;
+}
+
+.cases-table tr:last-child td {
+  border-bottom: none;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* ── Desenlace badges ── */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.badge--recuperado {
+  background: #eaf3ea;
+  color: #2a5a2a;
+  border: 1px solid #b8d8b8;
+}
+
+.badge--hospitalizado {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  border: 1px solid #b8d0e8;
+}
+
+.badge--fallecido {
+  background: #f0eded;
+  color: #5a2a2a;
+  border: 1px solid #d8b8b8;
+}
+
+/* ── Error inline ── */
+.cases-error {
+  font-size: 12px;
+  color: #7a2020;
+  background: #fdf0f0;
+  border: 1px solid #e8b8b8;
+  padding: 10px 14px;
+  border-radius: 3px;
 }
 </style>
